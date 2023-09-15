@@ -75,18 +75,8 @@ if [ -n "$system" ] && [ "$system" = "alpine" ]; then
         -p ${startport}-${endport}:${startport}-${endport} \
         --cap-add=MKNOD \
         alpine /bin/sh -c "tail -f /dev/null"
-
-    # Ask the user if they want to run the container in privileged mode
-    read -p "Do you want to run the container in privileged mode? (Y/N): " privileged_mode
-    privileged_mode=$(echo "$privileged_mode" | tr '[:upper:]' '[:lower:]')
-    
-    if [ "$privileged_mode" = "y" ]; then
-        docker exec -it ${name} /sbin/init
-    else
-        docker cp alpinessh.sh ${name}:/alpinessh.sh
-        docker exec -it ${name} sh -c "sh /alpinessh.sh ${passwd}"
-    fi
-    
+    docker cp alpinessh.sh ${name}:/alpinessh.sh
+    docker exec -it ${name} sh -c "sh /alpinessh.sh ${passwd}"
     echo "$name $sshport $passwd $cpu $memory $startport $endport $disk" >>"$name"
 else
     if [ ! -f ssh.sh ]; then
@@ -102,19 +92,8 @@ else
             --network=ipv6_net \
             -p ${sshport}:22 \
             -p ${startport}-${endport}:${startport}-${endport} \
-            --cap-add=MKNOD \
-            debian /sbin/init
-        
-        # Ask the user if they want to run the container in privileged mode
-        read -p "Do you want to run the container in privileged mode? (Y/N): " privileged_mode
-        privileged_mode=$(echo "$privileged_mode" | tr '[:upper:]' '[:lower:]')
-    
-        if [ "$privileged_mode" = "y" ]; then
-            docker exec -it ${name} /sbin/init
-        else
-            docker cp ssh.sh ${name}:/ssh.sh
-            docker exec -it ${name} bash -c "bash /ssh.sh ${passwd}"
-        fi
+            --privileged \  # 添加特权模式
+            debian /sbin/init  # 使用/sbin/init作为启动进程
     else
         docker run -d \
             --cpus=${cpu} \
@@ -122,9 +101,11 @@ else
             --name ${name} \
             -p ${sshport}:22 \
             -p ${startport}-${endport}:${startport}-${endport} \
-            --cap-add=MKNOD \
-            debian /bin/bash -c "tail -f /dev/null"
+            --privileged \  # 添加特权模式
+            debian /sbin/init  # 使用/sbin/init作为启动进程
     fi
+    docker cp ssh.sh ${name}:/ssh.sh
+    docker exec -it ${name} bash -c "bash /ssh.sh ${passwd}"
     echo "$name $sshport $passwd $cpu $memory $startport $endport $disk" >>"$name"
 fi
 cat "$name"
