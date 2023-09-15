@@ -95,7 +95,8 @@ else
             -p ${startport}-${endport}:${startport}-${endport} \
             --cap-add=MKNOD \
             --privileged \
-            debian /sbin/init -c "tail -f /dev/null"
+            -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+            debian /lib/systemd/systemd
         docker
     else
         docker run -d \
@@ -106,7 +107,8 @@ else
             -p ${startport}-${endport}:${startport}-${endport} \
             --cap-add=MKNOD \
             --privileged \
-            debian /sbin/init -c "tail -f /dev/null"
+            -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+            debian /lib/systemd/systemd
     fi
     docker cp ssh.sh ${name}:/ssh.sh
     docker exec -it ${name} bash -c "bash /ssh.sh ${passwd}"
