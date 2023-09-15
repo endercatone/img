@@ -74,6 +74,7 @@ if [ -n "$system" ] && [ "$system" = "alpine" ]; then
         -p ${sshport}:22 \
         -p ${startport}-${endport}:${startport}-${endport} \
         --cap-add=MKNOD \
+        --privileged \
         alpine /bin/sh -c "tail -f /dev/null"
     docker cp alpinessh.sh ${name}:/alpinessh.sh
     docker exec -it ${name} sh -c "sh /alpinessh.sh ${passwd}"
@@ -92,8 +93,10 @@ else
             --network=ipv6_net \
             -p ${sshport}:22 \
             -p ${startport}-${endport}:${startport}-${endport} \
-            --privileged \  # 添加特权模式
-            debian /sbin/init  # 使用/sbin/init作为启动进程
+            --cap-add=MKNOD \
+            --privileged \
+            debian /sbin/init -c "tail -f /dev/null"
+        docker
     else
         docker run -d \
             --cpus=${cpu} \
@@ -101,8 +104,9 @@ else
             --name ${name} \
             -p ${sshport}:22 \
             -p ${startport}-${endport}:${startport}-${endport} \
-            --privileged \  # 添加特权模式
-            debian /sbin/init  # 使用/sbin/init作为启动进程
+            --cap-add=MKNOD \
+            --privileged \
+            debian /sbin/init -c "tail -f /dev/null"
     fi
     docker cp ssh.sh ${name}:/ssh.sh
     docker exec -it ${name} bash -c "bash /ssh.sh ${passwd}"
